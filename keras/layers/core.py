@@ -249,6 +249,16 @@ class Layer(object):
             self.input = K.placeholder(shape=self.input_shape)
             return self.input
 
+    def get_first_input(self, train=False):
+        def recursive_input_getter(self, train=train):
+            if hasattr(self, 'previous'):
+                prev_input = self.previous.get_first_input(train=train)
+            elif hasattr(self, 'input'):
+                prev_input = self.input
+            return prev_input
+        first_input = recursive_input_getter(self, train=train)
+        return first_input
+
     def supports_masked_input(self):
         '''Whether or not this layer respects the output mask of its previous
         layer in its calculations.
