@@ -12,6 +12,10 @@ from .common import _FLOATX, _EPSILON
 theano.config.floatX = _FLOATX
 
 
+def kprint(x):
+    return theano.printing.Print('To print')(x)
+
+
 def _on_gpu():
     '''Return whether the session is set to
     run on GPU or not (i.e. on CPU).
@@ -164,12 +168,12 @@ def any(x, axis=None, keepdims=False):
     return T.any(x, axis=axis, keepdims=keepdims)
 
 
-def argmax(x, axis=-1):
-    return T.argmax(x, axis=axis, keepdims=False)
+def argmax(x, axis=-1, keepdims=False):
+    return T.argmax(x, axis=axis, keepdims=keepdims)
 
 
-def argmin(x, axis=-1):
-    return T.argmin(x, axis=axis, keepdims=False)
+def argmin(x, axis=-1, keepdims=False):
+    return T.argmin(x, axis=axis, keepdims=keepdims)
 
 
 def square(x):
@@ -211,6 +215,10 @@ def equal(x, y):
     return T.eq(x, y)
 
 
+def isclose(x, y, rtol=1e-05, atol=1e-08, equal_nan=False):
+    return T.isclose(x, y, rtol=rtol, atol=atol, equal_nan=equal_nan)
+
+
 def not_equal(x, y):
     return T.neq(x, y)
 
@@ -223,7 +231,27 @@ def minimum(x, y):
     return T.minimum(x, y)
 
 
+def gt(x, y):
+    return T.gt(x, y)
+
+
+def lt(x, y):
+    return T.lt(x, y)
+
+
+def cumsum(x, axis=None):
+    return T.extra_ops.cumsum(x, axis=axis)
+
+
+def to_one_hot(y, nb_class, dtype=None):
+    return T.extra_ops.to_one_hot(y, nb_class, dtype=dtype)
+
 # SHAPE OPERATIONS
+
+
+def roll(x, shift, axis=-1):
+    return T.roll(x, shift, axis=axis)
+
 
 def concatenate(tensors, axis=-1):
     return T.concatenate(tensors, axis=axis)
@@ -420,8 +448,13 @@ def spatial_3d_padding(x, padding=(1, 1, 1), dim_ordering='th'):
     return T.set_subtensor(output[indices], x)
 
 
-def pack(x):
-    return T.stack(*x)
+def pack(x, axis=0):
+    return T.stack(x, axis=0)
+
+
+def stacklists(tensor_list):
+    return T.stack(tensor_list)
+
 
 # VALUE MANIPULATION
 
@@ -541,12 +574,11 @@ def rnn(step_function, inputs, initial_states,
             output, new_states = step_function(input, states)
             return [output] + new_states
 
-        results, _ = theano.scan(
-            _step,
-            sequences=inputs,
-            outputs_info=[None] + initial_states,
-            non_sequences=constants,
-            go_backwards=go_backwards)
+        results, _ = theano.scan(_step,
+                                 sequences=inputs,
+                                 outputs_info=[None] + initial_states,
+                                 non_sequences=constants,
+                                 go_backwards=go_backwards)
 
     # deal with Theano API inconsistency
     if type(results) is list:
@@ -563,6 +595,81 @@ def rnn(step_function, inputs, initial_states,
     outputs = outputs.dimshuffle(axes)
     states = [T.squeeze(state[-1]) for state in states]
     return last_output, outputs, states
+
+
+def sampled_rnn(step_function, inputs, initial_states,
+                go_backwards=False, mask=None, constants=None):
+    '''Iterates over the time dimension of a tensor.
+
+    # Arguments
+        inputs: tensor of temporal data of shape (samples, time, ...)
+            (at least 3D).
+        step_function:
+            Parameters:
+                input: tensor with shape (samples, ...) (no time dimension),
+                    representing input for the batch of samples at a certain
+                    time step.
+                states: list of tensors.
+            Returns:
+                output: tensor with shape (samples, ...) (no time dimension),
+                new_states: list of tensors, same length and shapes
+                    as 'states'.
+        initial_states: tensor with shape (samples, ...) (no time dimension),
+            containing the initial values for the states used in
+            the step function.
+        go_backwards: boolean. If True, do the iteration overx
+            the time dimension in reverse order.
+        mask: binary tensor with shape (samples, time),
+            with a zero for every element that is masked.
+        constants: a list of constant values passed at each step.
+
+
+    # Returns
+        A tuple (last_output, outputs, new_states).
+            last_output: the latest output of the rnn, of shape (samples, ...)
+            outputs: tensor with shape (samples, time, ...) where each
+                entry outputs[s, t] is the output of the step function
+                at time t for sample s.
+            new_states: list of tensors, latest states returned by
+                the step function, of shape (samples, ...).
+    '''
+    ndim = inputs.ndim
+    assert ndim >= 3, 'Input should be at least 3D.'
+
+    axes = [1, 0] + list(range(2, ndim))
+    inputs = inputs.dimshuffle(axes)
+
+    # if constants is None:
+    #     constants = []
+
+    def _step(h, *states):
+        output, new_states = step_function(h, states)
+        return [output] + new_states
+
+    results, updates = theano.scan(_step,
+                                   sequences=inputs,
+                                   outputs_info=[None] + initial_states,
+                                   non_sequences=constants,
+                                   go_backwards=go_backwards)
+
+    # deal with Theano API inconsistency
+    if type(results) is list:
+        outputs = results[0]
+        states = results[1:]
+    else:
+        outputs = results
+        states = []
+
+    outputs = T.squeeze(outputs)
+    last_output = outputs[-1][-1] # -1 for sampled output,
+
+    axes = [1, 0] + list(range(2, outputs.ndim))
+    outputs = outputs.dimshuffle(axes)[-1] # -1 for sampled output,
+    axes = [1, 0] + list(range(2, outputs.ndim))
+    outputs = outputs.dimshuffle(axes)
+
+    states = [T.squeeze(state[-1]) for state in states]
+    return last_output, outputs, states, updates
 
 
 def switch(condition, then_expression, else_expression):
@@ -904,9 +1011,19 @@ def random_binomial(shape, p=0.0, dtype=_FLOATX, seed=None):
     rng = RandomStreams(seed=seed)
     return rng.binomial(shape, p=p, dtype=dtype)
 
+
+def random_multinomial(shape=None, pvals=None, dtype=_FLOATX, seed=None):
+    if seed is None:
+        seed = np.random.randint(10e6)
+    rng = RandomStreams(seed=seed)
+    return rng.multinomial(size=shape, pvals=pvals, dtype=dtype)
+
+
+
 '''
 more TODO:
 
 tensordot -> soon to be introduced in TF
 batched_tensordot -> reimplement
 '''
+
