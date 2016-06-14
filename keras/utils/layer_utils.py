@@ -11,7 +11,7 @@ from keras.layers.noise import *
 from keras.layers.normalization import *
 from keras.layers.recurrent import *
 from keras.layers.wrappers import *
-from keras.layers.variational import *
+from seya.layers.variational import *
 from keras.layers import containers
 from keras import regularizers
 from keras import constraints
