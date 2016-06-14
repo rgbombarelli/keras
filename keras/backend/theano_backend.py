@@ -243,7 +243,7 @@ def cumsum(x, axis=None):
     return T.extra_ops.cumsum(x, axis=axis)
 
 
-def to_one_hot(y, nb_class, dtype=None):
+def to_one_hot(y, nb_class, dtype=_FLOATX):
     return T.extra_ops.to_one_hot(y, nb_class, dtype=dtype)
 
 # SHAPE OPERATIONS

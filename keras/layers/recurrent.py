@@ -748,8 +748,8 @@ class TerminalGRU(GRU):
                             ' with previous output')
 
         x_z = h[:, :self.output_dim]
-        x_r = h[:, self.output_dim: 2 * self.output_dim]
-        x_h = h[:, 2 * self.output_dim:]
+        x_r = h[:, self.output_dim: 2. * self.output_dim]
+        x_h = h[:, 2. * self.output_dim:]
 
         z = self.inner_activation(x_z + K.dot(prev_output * B_U[0], self.U_z))
         r = self.inner_activation(x_r + K.dot(prev_output * B_U[1], self.U_r))
@@ -757,7 +757,7 @@ class TerminalGRU(GRU):
         hh = self.activation(x_h +
                              K.dot(r * prev_output * B_U[2], self.U_h) +
                              K.dot(r * prev_sampled_output * B_U[3], self.Y) )
-        output = z * prev_output + (1 - z) * hh
+        output = z * prev_output + (1. - z) * hh
 
         if self.train is True:
             final_output = output
