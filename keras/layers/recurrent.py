@@ -637,7 +637,9 @@ class GRU(Recurrent):
 
 
 class TerminalGRU(GRU):
-    '''Fully-connected RNN where the output is to be fed back to input.
+    '''GRU where the one-hot output of each neuron is fed into the next.
+    In training it uses the actual training data, in testing it uses the multinomial
+    sampled output of the previous neuron.
 
     '''
     def __init__(self, output_dim, temperature=1, **kwargs):
