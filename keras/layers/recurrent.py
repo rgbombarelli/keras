@@ -725,7 +725,7 @@ class TerminalGRU(GRU):
         if len(states) == 2 and self.train:
             B_U = states[-1]
         elif len(states) == 1 or not self.train:
-            B_U = [1., 1., 1., 1.]
+            B_U = np.array([1., 1., 1., 1.], dtype='float32')
         elif len(states) > 2:
             raise Exception('States has three elements')
         else:
@@ -756,7 +756,8 @@ class TerminalGRU(GRU):
 
         hh = self.activation(x_h +
                              K.dot(r * prev_output * B_U[2], self.U_h) +
-                             K.dot(r * prev_sampled_output * B_U[3], self.Y) )
+                             K.dot(r * prev_sampled_output * B_U[3], self.Y))
+
         output = z * prev_output + (1. - z) * hh
 
         if self.train is True:
