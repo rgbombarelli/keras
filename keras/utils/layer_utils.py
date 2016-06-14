@@ -3,18 +3,18 @@ import inspect
 import numpy as np
 import copy
 
-from ..layers.advanced_activations import *
-from ..layers.core import *
-from ..layers.convolutional import *
-from ..layers.embeddings import *
-from ..layers.noise import *
-from ..layers.normalization import *
-from ..layers.recurrent import *
-from ..layers.wrappers import *
-from ..layers.variational import *
-from ..layers import containers
-from .. import regularizers
-from .. import constraints
+from keras.layers.advanced_activations import *
+from keras.layers.core import *
+from keras.layers.convolutional import *
+from keras.layers.embeddings import *
+from keras.layers.noise import *
+from keras.layers.normalization import *
+from keras.layers.recurrent import *
+from keras.layers.wrappers import *
+from keras.layers.variational import *
+from keras.layers import containers
+from keras import regularizers
+from keras import constraints
 
 
 def container_from_config(original_layer_dict, custom_objects={}):
