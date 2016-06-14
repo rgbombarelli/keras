@@ -748,8 +748,8 @@ class TerminalGRU(GRU):
                             ' with previous output')
 
         x_z = h[:, :self.output_dim]
-        x_r = h[:, self.output_dim: 2. * self.output_dim]
-        x_h = h[:, 2. * self.output_dim:]
+        x_r = h[:, self.output_dim: 2 * self.output_dim]
+        x_h = h[:, 2 * self.output_dim:]
 
         z = self.inner_activation(x_z + K.dot(prev_output * B_U[0], self.U_z))
         r = self.inner_activation(x_r + K.dot(prev_output * B_U[1], self.U_r))
