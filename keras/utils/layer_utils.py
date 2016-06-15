@@ -164,6 +164,7 @@ def model_summary(model):
 
 
 from .generic_utils import get_from_module
+
 def get_layer(identifier, kwargs=None):
     return get_from_module(identifier, globals(), 'layer',
                            instantiate=True, kwargs=kwargs)

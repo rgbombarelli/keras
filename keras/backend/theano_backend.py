@@ -243,7 +243,7 @@ def cumsum(x, axis=None):
     return T.extra_ops.cumsum(x, axis=axis)
 
 
-def to_one_hot(y, nb_class, dtype=None):
+def to_one_hot(y, nb_class, dtype=_FLOATX):
     return T.extra_ops.to_one_hot(y, nb_class, dtype=dtype)
 
 # SHAPE OPERATIONS
@@ -542,7 +542,7 @@ def rnn(step_function, inputs, initial_states,
     inputs = inputs.dimshuffle(axes)
 
     if mask is not None:
-        if mask.ndim == ndim-1:
+        if mask.ndim == ndim - 1:
             mask = expand_dims(mask)
         assert mask.ndim == ndim
         mask = mask.dimshuffle(axes)
@@ -641,6 +641,10 @@ def sampled_rnn(step_function, inputs, initial_states,
 
     # if constants is None:
     #     constants = []
+
+    if mask is not None:
+        print """Mask is not doing anything right now :(
+                 This NEEDS to be fixed"""
 
     def _step(h, *states):
         output, new_states = step_function(h, states)
