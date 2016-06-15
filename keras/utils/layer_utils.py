@@ -11,6 +11,7 @@ from ..layers.noise import *
 from ..layers.normalization import *
 from ..layers.recurrent import *
 from ..layers.wrappers import *
+from ..layers.variational import *
 from ..layers import containers
 from .. import regularizers
 from .. import constraints
