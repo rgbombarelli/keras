@@ -425,7 +425,7 @@ class VAEWeightAnnealer(Callback):
         assert hasattr(layer, 'regularizer_scale'), \
             'Optimizer must have a "regularizer_scale" attribute.'
         weight = self.schedule(epoch)
-        print(weight)
+        print("Current vae annealer weight is {}".format(weight))
         assert type(weight) == float, 'The output of the "schedule" function should be float.'
         K.set_value(layer.regularizer_scale, weight)
 
