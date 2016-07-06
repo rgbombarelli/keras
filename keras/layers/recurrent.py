@@ -642,9 +642,11 @@ class TerminalGRU(GRU):
     sampled output of the previous neuron.
 
     '''
-    def __init__(self, output_dim, temperature=1, **kwargs):
+    def __init__(self, output_dim, temperature=1,
+                 rnd_seed=None, **kwargs):
         super(TerminalGRU, self).__init__(output_dim, **kwargs)
         self.temperature = temperature
+        self.rnd_seed = rnd_seed
 
     def build(self):
         self.Y = self.inner_init((self.output_dim, self.output_dim),
@@ -771,7 +773,7 @@ class TerminalGRU(GRU):
             norm_exp_sampled_output = exp_sampled / K.sum(exp_sampled,
                                                           axis=-1, keepdims=True)
 
-            rand_vector = K.random_uniform((self.input_shape[0], ))[0]
+            rand_vector = K.random_uniform((self.input_shape[0], seed=self.rnd_seed))[0]
             rand_matrix = K.stacklists([rand_vector for _ in range(self.output_dim)])
             rand_matrix = K.transpose(rand_matrix)
 
