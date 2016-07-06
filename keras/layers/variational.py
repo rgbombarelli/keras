@@ -27,7 +27,9 @@ class VariationalDense(Layer):
     def __init__(self, output_dim, batch_size, init='glorot_uniform',
                  activation='tanh',
                  weights=None, input_dim=None, regularizer_scale=1,
-                 prior_mean=0, prior_logsigma=1,  **kwargs):
+                 prior_mean=0, prior_logsigma=0, output_sample=False,
+                 output_var=False,
+                 **kwargs):
         self.prior_mean = prior_mean
         self.prior_logsigma = prior_logsigma
         self.regularizer_scale = K.variable(regularizer_scale)
@@ -37,6 +39,8 @@ class VariationalDense(Layer):
         self.output_dim = output_dim
         self.initial_weights = weights
         self.input_dim = input_dim
+        self.output_sample = output_sample
+        self.output_var = output_var
         if self.input_dim:
             kwargs['input_shape'] = (self.input_dim,)
         self.input = K.placeholder(ndim=2)
@@ -72,13 +76,19 @@ class VariationalDense(Layer):
 
     def _get_output(self, X, train=False):
         mean, logsigma = self.get_mean_logsigma(X)
-        # if train:a
-        # We prefer sample statitically also during prediction
-        if K._BACKEND == 'theano':
-            eps = K.random_normal((X.shape[0], self.output_dim))
+        if train or self.output_sample:
+            # Temporary change, scale down size of noise
+            if K._BACKEND == 'theano':
+                eps = K.random_normal((X.shape[0], self.output_dim), std=self.regularizer_scale)
+            else:
+                eps = K.random_normal((self.batch_size, self.output_dim))
+            # Temporary change, multiply by regularizer_scale
+            return mean + self.regularizer_scale * K.exp(logsigma) * eps
         else:
-            eps = K.random_normal((self.batch_size, self.output_dim))
-        return mean + K.exp(logsigma) * eps
+            if self.output_var:
+                return mean, logsigma
+            else:
+                return mean
 
     def get_output(self, train=False):
         X = self.get_input()
