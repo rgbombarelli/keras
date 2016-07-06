@@ -773,7 +773,7 @@ class TerminalGRU(GRU):
             norm_exp_sampled_output = exp_sampled / K.sum(exp_sampled,
                                                           axis=-1, keepdims=True)
 
-            rand_vector = K.random_uniform((self.input_shape[0], seed=self.rnd_seed))[0]
+            rand_vector = K.random_uniform((self.input_shape[0], ), seed=self.rnd_seed)[0]
             rand_matrix = K.stacklists([rand_vector for _ in range(self.output_dim)])
             rand_matrix = K.transpose(rand_matrix)
 
