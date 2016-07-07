@@ -700,7 +700,7 @@ class TerminalGRU(GRU):
             all_inputs = K.stacklists([preprocessed_input, shifted_raw_inputs])
             ndim = all_inputs.ndim
             axes = [1, 2, 0] + list(range(3, ndim))
-            all_inputs = all_inputs.dimshuffle(axes)
+            all_inputs = all_inputs.dimshufflef(axes)
             self.train = True
         else:
             all_inputs = preprocessed_input
@@ -772,8 +772,11 @@ class TerminalGRU(GRU):
             exp_sampled = K.exp(sampled_output)
             norm_exp_sampled_output = exp_sampled / K.sum(exp_sampled,
                                                           axis=-1, keepdims=True)
-
-            rand_vector = K.random_uniform((self.input_shape[0], ), seed=self.rnd_seed)[0]
+            if self.rnd_seed:
+                np.random.seed(self.rnd_seed)
+                rand_vector = np.random_uniform(size=(self.input_shape[0], ))[0]
+            else:
+                rand_vector = K.random_uniform((self.input_shape[0], ), seed=self.rnd_seed)[0]
             rand_matrix = K.stacklists([rand_vector for _ in range(self.output_dim)])
             rand_matrix = K.transpose(rand_matrix)
 
